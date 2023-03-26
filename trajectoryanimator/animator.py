@@ -97,7 +97,6 @@ class TrajectoryAnimator():
         self.ax.set_ylim(-plotLimits, plotLimits)
         self.ax.set_xlim(-plotLimits, plotLimits)
         self.ax.set_zlim(-plotLimits/2, plotLimits/2)
-        self.ax.set_box_aspect((2, 2, 1), zoom=1.41)
 
 
 
@@ -107,8 +106,8 @@ class TrajectoryAnimator():
         startTime = 1e20
         leftText = r""
         for idx, particle in enumerate(self.particles):
-            particle.line = self.ax.plot([], [], [])[0] # type: ignore
-            particle.tracer = self.ax.plot([], [], [], markevery=[-1], marker="o")[0] # type: ignore
+            particle.line = self.ax.plot([], [], [], clip_on=False)[0] # type: ignore
+            particle.tracer = self.ax.plot([], [], [], markevery=[-1], marker="o", clip_on=False)[0] # type: ignore
 
             self.fig.text(x = 0.07, y=0.9-(0.02*idx), s=particle.name, color=particle.color, fontsize=14)
 
@@ -127,7 +126,10 @@ class TrajectoryAnimator():
         self.totalSteps = len(self.timeData)
         self.fig.tight_layout()
         # self.leftText = self.fig.text(x = 0.01, y=0.98, s=leftText)
-        plt.axis("off")
+        self.fig.subplots_adjust(0, 0, 1, 1)
+        self.ax.set_box_aspect((2, 2, 1), zoom=2.4)
+        self.ax.set_axis_off()
+        # plt.axis("off")
 
 
     def _animateFunction(self, i):
