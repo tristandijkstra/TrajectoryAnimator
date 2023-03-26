@@ -202,16 +202,17 @@ if __name__ == "__main__":
         "Solar Sail 1 | Mass = 400 | Area = 12000",
         r"data/mass400_area12000.dat",
         "#d1495b",
-        tracerOn=False
+        tracerOn=True,
+        colorHistory=True
     )
     thing2 = TrajectoryParticle(
         "Solar Sail 2 | Mass = 700 | Area = 10000",
         r"data/mass700_area10000.dat",
         "#26C485",
         tracerOn=True,
-        colorHistory=False
+        colorHistory=True
     )
 
-    traj = TrajectoryAnimator([thing1, thing2], speed=400)
+    traj = TrajectoryAnimator([thing1, thing2], speed=40)
 
     traj.runAnimation()
