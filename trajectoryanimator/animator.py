@@ -46,6 +46,8 @@ class TrajectoryParticle:
         self.line = None
         self.tracer = None
         # print(self.posData)
+        self.lightUp = False
+        self.lightUpNum = 0
 
     def _readDataFile(
         self,
@@ -91,7 +93,7 @@ class TrajectoryParticle:
                 self.tracer.set_color(self.color)
                 self.tracer.set_linewidth(1.4)
 
-                self.line.set_alpha(0.2)
+                self.line.set_alpha(0.5)
 
         if time > self.endTime:
             if self.tracerOn:
@@ -102,19 +104,27 @@ class TrajectoryParticle:
                 # if time-self.startTime > (self.endTime-self.startTime)/2:
                 #     self.line.set_color(self.color)
 
+        if self.lightUp:
+            self.line.set_color(self.color)
+            self.line.set_alpha(min(1, 0.5 + (0.005 * self.lightUpNum)))
+            self.lightUpNum += 1
+
+
 
 class TrajectoryAnimator:
     def __init__(
         self,
         particles: List[TrajectoryParticle],
-        plotLimits=AU,
-        dpi=96,
-        dt=3600,
-        speed=50,
+        plotLimits:float=AU,
+        dpi:int=96,
+        dt:float=3600,
+        speed:int=50,
         # camera:Union[CameraSequence, None] = None
         camera=None,
+        lightUpAfter:bool=True
     ) -> None:
         plt.style.use("dark_background")
+        # plt.style.use("Solarize_Light2")
 
         self.plotLimits = plotLimits
 
@@ -162,19 +172,34 @@ class TrajectoryAnimator:
         )
 
         self.totalSteps = len(self.timeData)
+        self.totalStepsOrbit = len(self.timeData)
         self.fig.tight_layout()
         # self.leftText = self.fig.text(x = 0.01, y=0.98, s=leftText)
         self.fig.subplots_adjust(0, 0, 1, 1)
         self.ax.set_box_aspect((2, 2, 1), zoom=2.4)
         self.ax.set_axis_off()
-        # plt.axis("off")
+
+        self.camera = camera
+        self.lightUpAfter = lightUpAfter
+        if camera is not None:
+            self.totalSteps, self.cameraSequence = camera._transformCamera(self.totalSteps)
 
     def _animateFunction(self, i):
-        self.ax.view_init(elev=15.0, azim=-130)
-        self.ax.set_title(self.dates[i], y=0.983, fontsize=14)
+        if self.camera is None:
+            self.ax.view_init(elev=15.0, azim=-130)
+        else:
+            self.ax.set_box_aspect((2, 2, 1), zoom=self.cameraSequence[3][i])
+            self.ax.view_init(self.cameraSequence[0][i], self.cameraSequence[1][i], self.cameraSequence[2][i])
+
+        # print(min(i, self.totalStepsOrbit-2))
+        self.ax.set_title(self.dates[min(i, self.totalStepsOrbit-1)], y=0.983, fontsize=14)
 
         for particle in self.particles:
-            particle._updateLine(self.timeData[i])
+            particle._updateLine(self.timeData[min(i, self.totalStepsOrbit-1)])
+
+            if self.lightUpAfter and (i >= self.totalStepsOrbit):
+                particle.lightUp = True
+
         return self.lines
 
     def runAnimation(self, savefile="anim", fps=120):
@@ -185,7 +210,7 @@ class TrajectoryAnimator:
             self.fig,
             self._animateFunction,
             frames=tqdm(range(self.totalSteps)),
-            interval=1,
+            interval=200,
             blit=True,
         )
 
@@ -201,23 +226,62 @@ class CameraSequence:
     def __init__(self) -> None:
         self.sequence = []
         self.endTimes = []
+        self.extendPast = False
+
+        self.finalSet:np.ndarray = None
 
     def __str__(self) -> str:
         res = "Camera Sequence: \n"
         for idx, u in enumerate(self.sequence):
-            res += f"{idx} | {u[0]} | elev = {u[1][0]} | azi = {u[1][1]} | roll = {u[1][2]}\n"
+            res += f"{idx} | {self.endTimes[0]} | elev = {u[0]} | azi = {u[1]} | roll = {u[2]}\n | zoom = {u[3]}\n"
         return res
 
     def addSegment(
-        self, toFrac: float, elevation: float, azimuth: float, roll: float = 0
+        self, toFrac: float, elevation: float, azimuth: float, roll: float = 0, zoom:float = 2.4
     ) -> None:
-        segment = [toFrac, [elevation, azimuth, roll]]
+        segment = [elevation, azimuth, roll, zoom]
         self.endTimes.append(toFrac)
         self.sequence.append(segment)
 
     def clearSequence(self) -> None:
         self.sequence = []
+    
+    def _transformCamera(self, totalSteps):
+        if max(self.endTimes) > 1:
+            self.extendPast = True
+        
+        self.endTimes = [int(x*totalSteps) for x in self.endTimes]
 
+        finalTime = max(self.endTimes)
+
+        arrays = []
+        lastStartTime = 0
+        lastElev = 0
+        lastAzi = 0
+        lastRoll = 0
+        lastZoom = 0
+
+        for seqSet, endTime in zip(self.sequence, self.endTimes):
+            # arrays += list(range(lastStartTime, ))
+            if endTime == 0:
+                lastElev, lastAzi, lastRoll, lastZoom = seqSet
+            else:
+                currentElev, currentAzi, currentRoll, currentZoom = seqSet
+
+                elevArray = np.linspace(lastElev, currentElev, (endTime-lastStartTime))
+                aziArray = np.linspace(lastAzi, currentAzi, (endTime-lastStartTime))
+                rollArray = np.linspace(lastRoll, currentRoll, (endTime-lastStartTime))
+                zoomArray = np.linspace(lastZoom, currentZoom, (endTime-lastStartTime))
+
+                arrays.append(np.vstack([elevArray, aziArray, rollArray, zoomArray]))
+
+                lastStartTime = endTime
+                lastElev, lastAzi, lastRoll, lastZoom = seqSet
+
+        self.finalSet = np.hstack(arrays)
+
+        return finalTime, self.finalSet
+    
 
 if __name__ == "__main__":
     thing1 = TrajectoryParticle(
@@ -236,12 +300,16 @@ if __name__ == "__main__":
     )
 
     camera = CameraSequence()
-    camera.addSegment(0, 90, -130)
-    camera.addSegment(0.5, 90, -130)
-    camera.addSegment(0.6, 15, -130)
-    camera.addSegment(1, 15, -130)
+    camera.addSegment(0, 90, 45, zoom=1.2)
+    camera.addSegment(0.1, 90, 45, zoom=1.2)
+    camera.addSegment(0.35, 90, 45)
+    camera.addSegment(0.45, 15, 45)
+    camera.addSegment(1, 15, 45)
+    camera.addSegment(1.05, 15, 45)
+    camera.addSegment(1.3, 15, 445)
 
-    print(camera)
-    traj = TrajectoryAnimator([thing1, thing2], speed=40)
+    # print(camera)
+    # print(camera._transformCamera(10)[1])
+    traj = TrajectoryAnimator([thing1, thing2], speed=40, camera=camera, dpi=96)
 
     traj.runAnimation()
