@@ -1,3 +1,5 @@
 test*
 animations/
 data/
+.vscode
+__pycache__
