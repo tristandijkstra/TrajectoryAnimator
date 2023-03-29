@@ -104,7 +104,7 @@ class TrajectoryParticle:
                 # if time-self.startTime > (self.endTime-self.startTime)/2:
                 #     self.line.set_color(self.color)
 
-        if self.lightUp:
+        if self.lightUp and self.tracerOn:
             self.line.set_color(self.color)
             self.line.set_alpha(min(1, 0.5 + (0.005 * self.lightUpNum)))
             self.lightUpNum += 1
@@ -246,6 +246,15 @@ class CameraSequence:
     def clearSequence(self) -> None:
         self.sequence = []
     
+    def bezier(self, x0:float, x1:float, t0:int, t1:int):
+        if x1 == x0:
+            return np.linspace(x0, x1, (t1-t0))
+        else:
+            t = np.linspace(0, 1, (t1-t0))
+            arr = (t * t * (3.0 - 2.0 * t))
+            return (arr * (x1-x0)) + x0
+
+
     def _transformCamera(self, totalSteps):
         if max(self.endTimes) > 1:
             self.extendPast = True
@@ -268,10 +277,10 @@ class CameraSequence:
             else:
                 currentElev, currentAzi, currentRoll, currentZoom = seqSet
 
-                elevArray = np.linspace(lastElev, currentElev, (endTime-lastStartTime))
-                aziArray = np.linspace(lastAzi, currentAzi, (endTime-lastStartTime))
-                rollArray = np.linspace(lastRoll, currentRoll, (endTime-lastStartTime))
-                zoomArray = np.linspace(lastZoom, currentZoom, (endTime-lastStartTime))
+                elevArray = self.bezier(lastElev, currentElev, lastStartTime, endTime)
+                aziArray = self.bezier(lastAzi, currentAzi, lastStartTime, endTime)
+                rollArray = self.bezier(lastRoll, currentRoll, lastStartTime, endTime)
+                zoomArray = self.bezier(lastZoom, currentZoom, lastStartTime, endTime)
 
                 arrays.append(np.vstack([elevArray, aziArray, rollArray, zoomArray]))
 
@@ -308,8 +317,6 @@ if __name__ == "__main__":
     camera.addSegment(1.05, 15, 45)
     camera.addSegment(1.3, 15, 445)
 
-    # print(camera)
-    # print(camera._transformCamera(10)[1])
     traj = TrajectoryAnimator([thing1, thing2], speed=40, camera=camera, dpi=96)
 
     traj.runAnimation()
