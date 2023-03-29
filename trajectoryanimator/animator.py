@@ -19,6 +19,7 @@ class TrajectoryParticle:
         name,
         dataFile: str,
         color: str,
+        extraData:Union[pd.DataFrame, None]=None,
         customData=None,
         colorHistory=True,
         tracerOn=True,
@@ -48,6 +49,17 @@ class TrajectoryParticle:
         # print(self.posData)
         self.lightUp = False
         self.lightUpNum = 0
+
+
+        if extraData is not None:
+            self.extraData = extraData
+            self.extraDataAvailable = True
+            self.extraDataLen = len(extraData.columns) - 1
+            self.extraDataNames = list(extraData.columns.values)[1:]
+            self.extraDataText = ""
+
+        else:
+            self.extraDataAvailable = False
 
     def _readDataFile(
         self,
@@ -95,6 +107,12 @@ class TrajectoryParticle:
 
                 self.line.set_alpha(0.5)
 
+            if self.extraDataAvailable and len(idx) > 0:
+                temp = ""
+                for idxExtra, thing in enumerate(self.extraDataNames):
+                    temp += f"{thing.capitalize()}: {(self.extraData.loc[idx[-1]].iloc[idxExtra])}\n"
+                self.extraDataText = temp
+
         if time > self.endTime:
             if self.tracerOn:
                 idx = self.timeData.query("t < @time").index
@@ -141,6 +159,15 @@ class TrajectoryAnimator:
 
         endTime = -1000
         startTime = 1e20
+
+        self.rightText = self.fig.text(
+                    x=0.93,
+                    y=0.86,
+                    s="",
+                    # color=particle.color,
+                    fontsize=14,
+                    horizontalalignment='right',
+                )
 
         for idx, particle in enumerate(self.particles):
             if particle.tracerOn:
@@ -199,6 +226,10 @@ class TrajectoryAnimator:
 
             if self.lightUpAfter and (i >= self.totalStepsOrbit):
                 particle.lightUp = True
+
+            if particle.extraDataAvailable:
+                self.rightText.set_color(particle.histColor)
+                self.rightText.set_text(particle.extraDataText)
 
         return self.lines
 
@@ -317,6 +348,6 @@ if __name__ == "__main__":
     camera.addSegment(1.05, 15, 45)
     camera.addSegment(1.3, 15, 445)
 
-    traj = TrajectoryAnimator([thing1, thing2], speed=40, camera=camera, dpi=96)
+    traj = TrajectoryAnimator([thing1, thing2], speed=400, camera=camera, dpi=96)
 
     traj.runAnimation()
