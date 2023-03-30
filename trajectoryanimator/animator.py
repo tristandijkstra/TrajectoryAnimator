@@ -19,7 +19,7 @@ class TrajectoryParticle:
         name,
         dataFile: str,
         color: str,
-        extraData:Union[pd.DataFrame, None]=None,
+        extraData: Union[pd.DataFrame, None] = None,
         customData=None,
         colorHistory=True,
         tracerOn=True,
@@ -50,12 +50,11 @@ class TrajectoryParticle:
         self.lightUp = False
         self.lightUpNum = 0
 
-
         if extraData is not None:
             self.extraData = extraData
             self.extraDataAvailable = True
-            self.extraDataLen = len(extraData.columns) - 1
-            self.extraDataNames = list(extraData.columns.values)[1:]
+            self.extraDataLen = len(extraData.columns)
+            self.extraDataNames = list(extraData.columns.values)
             self.extraDataText = ""
 
         else:
@@ -128,18 +127,18 @@ class TrajectoryParticle:
             self.lightUpNum += 1
 
 
-
 class TrajectoryAnimator:
     def __init__(
         self,
         particles: List[TrajectoryParticle],
-        plotLimits:float=AU,
-        dpi:int=96,
-        dt:float=3600,
-        speed:int=50,
+        plotLimits: float = AU,
+        resolution=[1920, 1080],
+        dpi: int = 96,
+        dt: float = 3600,
+        speed: int = 50,
         # camera:Union[CameraSequence, None] = None
         camera=None,
-        lightUpAfter:bool=True
+        lightUpAfter: bool = True,
     ) -> None:
         plt.style.use("dark_background")
         # plt.style.use("Solarize_Light2")
@@ -147,7 +146,9 @@ class TrajectoryAnimator:
         self.plotLimits = plotLimits
 
         self.dpi = dpi
-        self.fig = plt.figure(figsize=(1920 / dpi, 1080 / dpi), dpi=dpi)
+        self.fig = plt.figure(
+            figsize=(resolution[0] / dpi, resolution[1] / dpi), dpi=dpi
+        )
 
         self.ax = self.fig.add_subplot(111, projection="3d")
 
@@ -161,13 +162,15 @@ class TrajectoryAnimator:
         startTime = 1e20
 
         self.rightText = self.fig.text(
-                    x=0.93,
-                    y=0.86,
-                    s="",
-                    # color=particle.color,
-                    fontsize=14,
-                    horizontalalignment='right',
-                )
+            x=0.93,
+            y=0.916,
+            s="",
+            # color=particle.color,
+            fontsize=14,
+            horizontalalignment="right",
+            fontfamily="monospace",
+            verticalalignment="top",
+        )
 
         for idx, particle in enumerate(self.particles):
             if particle.tracerOn:
@@ -178,10 +181,11 @@ class TrajectoryAnimator:
 
             self.fig.text(
                 x=0.07,
-                y=0.9 - (0.02 * idx),
+                y=0.916 - (0.02 * idx),
                 s=particle.name,
                 color=particle.color,
                 fontsize=14,
+                verticalalignment="top",
             )
 
             particle._dropBySpeed(speed)
@@ -209,20 +213,31 @@ class TrajectoryAnimator:
         self.camera = camera
         self.lightUpAfter = lightUpAfter
         if camera is not None:
-            self.totalSteps, self.cameraSequence = camera._transformCamera(self.totalSteps)
+            self.totalSteps, self.cameraSequence = camera._transformCamera(
+                self.totalSteps
+            )
 
     def _animateFunction(self, i):
         if self.camera is None:
             self.ax.view_init(elev=15.0, azim=-130)
         else:
             self.ax.set_box_aspect((2, 2, 1), zoom=self.cameraSequence[3][i])
-            self.ax.view_init(self.cameraSequence[0][i], self.cameraSequence[1][i], self.cameraSequence[2][i])
+            self.ax.view_init(
+                self.cameraSequence[0][i],
+                self.cameraSequence[1][i],
+                self.cameraSequence[2][i],
+            )
 
         # print(min(i, self.totalStepsOrbit-2))
-        self.ax.set_title(self.dates[min(i, self.totalStepsOrbit-1)], y=0.983, fontsize=14)
+        self.ax.set_title(
+            self.dates[min(i, self.totalStepsOrbit - 1)],
+            y=0.983,
+            fontsize=14,
+            verticalalignment="top",
+        )
 
         for particle in self.particles:
-            particle._updateLine(self.timeData[min(i, self.totalStepsOrbit-1)])
+            particle._updateLine(self.timeData[min(i, self.totalStepsOrbit - 1)])
 
             if self.lightUpAfter and (i >= self.totalStepsOrbit):
                 particle.lightUp = True
@@ -233,8 +248,8 @@ class TrajectoryAnimator:
 
         return self.lines
 
-    def runAnimation(self, savefile="anim", fps=120):
-        fullSaveName = "animations/" + savefile + ".mp4"
+    def runAnimation(self, savefile="anim", fps=120, fileExtension="mp4"):
+        fullSaveName = "animations/" + savefile + "." + fileExtension
         print("Saving to " + fullSaveName)
 
         anim = FuncAnimation(
@@ -248,9 +263,20 @@ class TrajectoryAnimator:
         if not os.path.exists("animations"):
             os.makedirs("animations")
 
-        anim.save(
-            fullSaveName, fps=fps, extra_args=["-vcodec", "libx264"], dpi=self.dpi
-        )
+        if (fileExtension == "gif") or (fileExtension == "webm"):
+            anim.save(fullSaveName, fps=fps, dpi=self.dpi)
+            # anim.save(
+            #     fullSaveName, fps=fps, writer='imagemagick', dpi=self.dpi
+            # )
+        elif fileExtension == "mp4":
+            anim.save(
+                fullSaveName, fps=fps, extra_args=["-vcodec", "libx264"], dpi=self.dpi
+            )
+        else:
+            print(fileExtension + " not implemented")
+            anim.save(
+                fullSaveName, fps=fps, extra_args=["-vcodec", "libx264"], dpi=self.dpi
+            )
 
 
 class CameraSequence:
@@ -259,7 +285,7 @@ class CameraSequence:
         self.endTimes = []
         self.extendPast = False
 
-        self.finalSet:np.ndarray = None
+        self.finalSet: np.ndarray = None
 
     def __str__(self) -> str:
         res = "Camera Sequence: \n"
@@ -268,7 +294,12 @@ class CameraSequence:
         return res
 
     def addSegment(
-        self, toFrac: float, elevation: float, azimuth: float, roll: float = 0, zoom:float = 2.4
+        self,
+        toFrac: float,
+        elevation: float,
+        azimuth: float,
+        roll: float = 0,
+        zoom: float = 2.4,
     ) -> None:
         segment = [elevation, azimuth, roll, zoom]
         self.endTimes.append(toFrac)
@@ -276,21 +307,20 @@ class CameraSequence:
 
     def clearSequence(self) -> None:
         self.sequence = []
-    
-    def bezier(self, x0:float, x1:float, t0:int, t1:int):
-        if x1 == x0:
-            return np.linspace(x0, x1, (t1-t0))
-        else:
-            t = np.linspace(0, 1, (t1-t0))
-            arr = (t * t * (3.0 - 2.0 * t))
-            return (arr * (x1-x0)) + x0
 
+    def bezier(self, x0: float, x1: float, t0: int, t1: int):
+        if x1 == x0:
+            return np.linspace(x0, x1, (t1 - t0))
+        else:
+            t = np.linspace(0, 1, (t1 - t0))
+            arr = t * t * (3.0 - 2.0 * t)
+            return (arr * (x1 - x0)) + x0
 
     def _transformCamera(self, totalSteps):
         if max(self.endTimes) > 1:
             self.extendPast = True
-        
-        self.endTimes = [int(x*totalSteps) for x in self.endTimes]
+
+        self.endTimes = [int(x * totalSteps) for x in self.endTimes]
 
         finalTime = max(self.endTimes)
 
@@ -321,7 +351,7 @@ class CameraSequence:
         self.finalSet = np.hstack(arrays)
 
         return finalTime, self.finalSet
-    
+
 
 if __name__ == "__main__":
     thing1 = TrajectoryParticle(
