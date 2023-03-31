@@ -96,7 +96,8 @@ camera.addSegment(1.05, 15, 90)
 camera.addSegment(1.3, 15, 360 + 135)
  
 traj = TrajectoryAnimator(
-    [sail, earth, venus, mercury], speed=50, camera=camera, dpi=96
+    [sail, earth, venus, mercury], speed=20, camera=camera, dpi=96, centralBodyColor="#FFC300"
 )
 
-traj.runAnimation(fps=240, fileExtension="gif")
+traj.runAnimation(fps=120, fileExtension="mp4")
+# traj.runAnimation(fps=240, fileExtension="gif")

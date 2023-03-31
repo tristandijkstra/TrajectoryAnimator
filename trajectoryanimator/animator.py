@@ -97,12 +97,14 @@ class TrajectoryParticle:
             self.line.set_3d_properties(temp.z)
             self.line.set_color(self.histColor)
             self.line.set_alpha(1)
+            self.line.set_markersize(9)
             # self.line.set_linewidth(0.7)
             if self.tracerOn:
                 self.tracer.set_data(tempTracer.x, tempTracer.y)  # , color=self.color)
                 self.tracer.set_3d_properties(tempTracer.z)
                 self.tracer.set_color(self.color)
                 self.tracer.set_linewidth(1.4)
+                self.tracer.set_markersize(9)
 
                 self.line.set_alpha(0.5)
 
@@ -139,6 +141,7 @@ class TrajectoryAnimator:
         # camera:Union[CameraSequence, None] = None
         camera=None,
         lightUpAfter: bool = True,
+        centralBodyColor = None
     ) -> None:
         plt.style.use("dark_background")
         # plt.style.use("Solarize_Light2")
@@ -216,6 +219,9 @@ class TrajectoryAnimator:
             self.totalSteps, self.cameraSequence = camera._transformCamera(
                 self.totalSteps
             )
+
+        if centralBodyColor is not None:
+            self.ax.scatter(0,0,0, color=centralBodyColor, s=120)
 
     def _animateFunction(self, i):
         if self.camera is None:
