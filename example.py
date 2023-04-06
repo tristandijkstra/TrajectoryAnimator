@@ -21,7 +21,8 @@ depVars = [
     "cone",
     "clock",
 ]
-
+temp = [x for x in range(18)]
+depVars = depVars + temp
 drops = [
     "ThrustX",
     "ThrustY",
@@ -39,12 +40,14 @@ yearInSeconds = 365 * 24 * 3600
 AU = 149.6e9
 
 extradata = pd.read_csv(
-    r"data/mass400_area12000_dep.dat",
+    r"data/best_dep.dat",
     delimiter="\t",
     header=None,
     names=depVars,
-).drop(drops, axis=1)
-
+).drop(drops+temp, axis=1)
+print(extradata.shape)
+print(len(depVars))
+print(extradata.head(3))
 extradata = (
     extradata.assign(time=lambda x: ((x.time - extradata.time[0]) / yearInSeconds))
     .assign(a=lambda x: (x.a / AU).apply('{:.2f}'.format) + " AU")
@@ -55,8 +58,8 @@ extradata = (
 print(extradata.tail())
 
 sail = TrajectoryParticle(
-    "Solar Sail 1 | Mass = 400 | Area = 12000",
-    r"data/mass400_area12000_2.dat",
+    "Solar Surfer",
+    r"data/best.dat",
     "#ef476f",
     tracerOn=True,
     colorHistory=False,
@@ -86,18 +89,19 @@ mercury = TrajectoryParticle(
 
 
 camera = CameraSequence()
-camera.addSegment(0, 90, 90, zoom=1.2)
-camera.addSegment(0.15, 90, 90, zoom=1.2)
-camera.addSegment(0.38, 90, 90)
-camera.addSegment(0.4, 90, 90)
+camera.addSegment(0, 15, 90)
+# camera.addSegment(0.15, 90, 90, zoom=1.2)
+camera.addSegment(0.38, 15, 90)
+camera.addSegment(0.4, 15, 90)
 camera.addSegment(0.50, 15, 90)
 camera.addSegment(1, 15, 90)
-camera.addSegment(1.05, 15, 90)
-camera.addSegment(1.3, 15, 360 + 135)
+camera.addSegment(1.05, 15, 135)
+camera.addSegment(1.1, 15, 135)
+# camera.addSegment(1.05, 15, 90)
  
 traj = TrajectoryAnimator(
-    [sail, earth, venus, mercury], speed=20, camera=camera, dpi=96, centralBodyColor="#FFC300"
+    [sail, earth, venus, mercury], speed=40, camera=camera, dpi=96, centralBodyColor="#FFC300"
 )
 
-traj.runAnimation(fps=120, fileExtension="mp4")
+traj.runAnimation(fps=180, fileExtension="mp4")
 # traj.runAnimation(fps=240, fileExtension="gif")

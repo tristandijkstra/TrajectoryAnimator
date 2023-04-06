@@ -169,7 +169,7 @@ class TrajectoryAnimator:
             y=0.916,
             s="",
             # color=particle.color,
-            fontsize=14,
+            fontsize=24,
             horizontalalignment="right",
             fontfamily="monospace",
             verticalalignment="top",
@@ -184,10 +184,10 @@ class TrajectoryAnimator:
 
             self.fig.text(
                 x=0.07,
-                y=0.916 - (0.02 * idx),
+                y=0.916 - (0.03 * idx),
                 s=particle.name,
                 color=particle.color,
-                fontsize=14,
+                fontsize=24,
                 verticalalignment="top",
             )
 
@@ -238,7 +238,7 @@ class TrajectoryAnimator:
         self.ax.set_title(
             self.dates[min(i, self.totalStepsOrbit - 1)],
             y=0.983,
-            fontsize=14,
+            fontsize=24,
             verticalalignment="top",
         )
 
