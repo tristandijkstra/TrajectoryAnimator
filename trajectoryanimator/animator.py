@@ -5,8 +5,6 @@ from matplotlib.animation import FuncAnimation
 import os.path
 from tqdm import tqdm
 from typing import List, Union
-from datetime import datetime
-from matplotlib.collections import LineCollection
 
 AU = 149.6e9
 
@@ -141,7 +139,7 @@ class TrajectoryAnimator:
         # camera:Union[CameraSequence, None] = None
         camera=None,
         lightUpAfter: bool = True,
-        centralBodyColor = None
+        centralBodyColor=None,
     ) -> None:
         plt.style.use("dark_background")
         # plt.style.use("Solarize_Light2")
@@ -177,10 +175,14 @@ class TrajectoryAnimator:
 
         for idx, particle in enumerate(self.particles):
             if particle.tracerOn:
-                particle.line = self.ax.plot([], [], [], clip_on=False)[0]  # type: ignore
-                particle.tracer = self.ax.plot([], [], [], markevery=[-1], marker="o", clip_on=False)[0]  # type: ignore
+                particle.line = self.ax.plot([], [], [], clip_on=False)[0]
+                particle.tracer = self.ax.plot(
+                    [], [], [], markevery=[-1], marker="o", clip_on=False
+                )[0]
             else:
-                particle.line = self.ax.plot([], [], [], marker="o", markevery=[-1], clip_on=False)[0]  # type: ignore
+                particle.line = self.ax.plot(
+                    [], [], [], marker="o", markevery=[-1], clip_on=False
+                )[0]
 
             self.fig.text(
                 x=0.07,
@@ -221,7 +223,7 @@ class TrajectoryAnimator:
             )
 
         if centralBodyColor is not None:
-            self.ax.scatter(0,0,0, color=centralBodyColor, s=120)
+            self.ax.scatter(0, 0, 0, color=centralBodyColor, s=120)
 
     def _animateFunction(self, i):
         if self.camera is None:
@@ -234,7 +236,6 @@ class TrajectoryAnimator:
                 self.cameraSequence[2][i],
             )
 
-        # print(min(i, self.totalStepsOrbit-2))
         self.ax.set_title(
             self.dates[min(i, self.totalStepsOrbit - 1)],
             y=0.983,

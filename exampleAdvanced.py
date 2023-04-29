@@ -40,7 +40,7 @@ yearInSeconds = 365 * 24 * 3600
 AU = 149.6e9
 
 extradata = pd.read_csv(
-    r"data/best_dep.dat",
+    r"data/mass400_area12000_dep.dat",
     delimiter="\t",
     header=None,
     names=depVars,
@@ -61,7 +61,7 @@ print(extradata.tail())
 
 sail = TrajectoryParticle(
     "Solar Surfer",
-    r"data/best.dat",
+    r"data/mass400_area12000.dat",
     "#ef476f",
     tracerOn=True,
     colorHistory=False,

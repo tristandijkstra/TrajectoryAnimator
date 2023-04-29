@@ -1,5 +1,10 @@
-test*
+.test*
 animations/
 data/
 .vscode
 __pycache__
+*.egg-info
+build
+dist
+*.whl
+.eggs
