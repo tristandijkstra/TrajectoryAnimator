@@ -10,4 +10,6 @@ An example can be found here: [JUICE trajectory](example_juice.ipynb)
 Here is an output from the [advanced example](exampleAdvanced.py):
 
 ![Animation](doc/anim.gif)
-![Animation](doc/juice.mp4)
+
+
+![Animation](doc/juice_cam.gif)
