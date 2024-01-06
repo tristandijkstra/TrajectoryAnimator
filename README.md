@@ -11,4 +11,5 @@ Here is an output from the [JUICE example](exampleAdvanced.py):
 
 ![Animation](doc/anim.gif)
 
-https://github.com/tristandijkstra/TrajectoryAnimator/assets/13809731/3a09d6ab-6161-456b-89df-86aad3756baf
+https://github.com/tristandijkstra/TrajectoryAnimator/assets/13809731/caf43deb-a975-4697-b3bf-bc794da006df
+
